@@ -24,7 +24,7 @@ public class ExpertFinderResource {
     @Produces("application/json")
     public String findExperts(@NotNull @QueryParam("iri") Set<String> iris,
                               @DefaultValue("10") @QueryParam("k") Integer k,
-                              @DefaultValue("1") @Min(value = 0) @Max(value = 1) @QueryParam("decay") Double decay) {
+                              @DefaultValue("0") @Min(value = 0) @Max(value = 1) @QueryParam("decay") Double decay) {
         service.findExperts(iris, k, decay);
         return null;
     }

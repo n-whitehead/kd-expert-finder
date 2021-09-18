@@ -7,6 +7,7 @@ public interface ExpertFinderService {
 
     /**
      * Return top-k recommended authors given a set of concept iris.
+     * A decay of 0 means no decay is calculated (default).
      *
      * @param iris  - iris of the concepts
      * @param k     - number of authors results to return

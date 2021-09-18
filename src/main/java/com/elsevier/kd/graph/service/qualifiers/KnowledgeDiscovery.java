@@ -1,4 +1,4 @@
-package com.elsevier.kd.graph.service.producer;
+package com.elsevier.kd.graph.service.qualifiers;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Documented;
@@ -12,5 +12,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Documented
 @Qualifier
-public @interface KDDriver {
+public @interface KnowledgeDiscovery {
 }

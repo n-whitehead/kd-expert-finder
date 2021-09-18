@@ -1,5 +1,6 @@
-package com.elsevier.kd.graph.service.producer;
+package com.elsevier.kd.graph.service.impl;
 
+import com.elsevier.kd.graph.service.qualifiers.KnowledgeDiscovery;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -12,7 +13,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DriverProducer {
+public class Neo4jDriverProducer {
 
     @Inject
     @ConfigProperty(name = "neo4j.uri")
@@ -44,7 +45,7 @@ public class DriverProducer {
     }
 
     @Produces
-    @KDDriver
+    @KnowledgeDiscovery
     public Driver driver() {
         return this.driver;
     }

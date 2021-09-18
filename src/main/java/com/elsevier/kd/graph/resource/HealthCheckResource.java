@@ -19,16 +19,13 @@ import java.time.temporal.ChronoUnit;
 @Path("/_health")
 public class HealthCheckResource {
 
+    private final String serviceStart = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
     @ConfigProperty(name = "service.name", defaultValue = "KD Expert Finder Service")
     String serviceName;
-
     @ConfigProperty(name = "service.version", defaultValue = "0.0.0")
     String buildVersion;
-
     @ConfigProperty(name = "build.hash", defaultValue = "unknown")
     String buildHash;
-
-    private final String serviceStart = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
     private HealthCheckModel model;
 
     @PostConstruct

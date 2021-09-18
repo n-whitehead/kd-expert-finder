@@ -1,34 +1,13 @@
 package com.elsevier.kd.graph.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Author {
 
     private String id;
     private Integer ordinal;
-    private List<Double> citationCounts = new ArrayList<>();
-    private int hindex;
-
-    public void calculate() {
-        hindex = 0;
-        citationCounts.sort(Collections.reverseOrder());
-        for (int h = 0; h < citationCounts.size(); h++) {
-            if (h >= citationCounts.get(h)) {
-                hindex = h;
-            }
-        }
-        if (hindex == 0) {
-            hindex = citationCounts.size();
-        }
-    }
-
-    public void addCitationCount(Double count) {
-        if (count != null) {
-            this.citationCounts.add(count);
-        }
-    }
+    private List<CitationCount> citations;
+    private double hindex;
 
     public String getId() {
         return id;
@@ -46,11 +25,19 @@ public class Author {
         this.ordinal = ordinal;
     }
 
-    public List<Double> getCitationCounts() {
-        return citationCounts;
+    public List<CitationCount> getCitations() {
+        return citations;
     }
 
-    public int getHindex() {
+    public void setCitations(List<CitationCount> citations) {
+        this.citations = citations;
+    }
+
+    public double getHindex() {
         return hindex;
+    }
+
+    public void setHindex(double hindex) {
+        this.hindex = hindex;
     }
 }
