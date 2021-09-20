@@ -7,14 +7,7 @@ public class Concept {
 
     private String iri;
     private List<String> prefLabels = new ArrayList<>();
-    private List<Author> authors = new ArrayList<>();
-
-    public Concept() {
-    }
-
-    public Concept(String iri) {
-        this.iri = iri;
-    }
+    private List<Work> works = new ArrayList<>();
 
     public String getIri() {
         return iri;
@@ -32,11 +25,11 @@ public class Concept {
         this.prefLabels = prefLabels;
     }
 
-    public List<Author> getAuthors() {
-        return authors;
+    public List<Work> getWorks() {
+        return works;
     }
 
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
+    public void setWorks(List<Work> works) {
+        this.works = works;
     }
 }

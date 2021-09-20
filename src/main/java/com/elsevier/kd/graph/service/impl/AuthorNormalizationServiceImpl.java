@@ -1,22 +1,20 @@
 package com.elsevier.kd.graph.service.impl;
 
-import com.elsevier.kd.graph.model.Author;
-import com.elsevier.kd.graph.model.CitationCount;
-import com.elsevier.kd.graph.service.AuthorNormalizationService;
+import com.elsevier.kd.graph.model.Work;
+import com.elsevier.kd.graph.service.NormalizationService;
 
 import javax.enterprise.context.ApplicationScoped;
 
+/**
+ * Normalize the citation count
+ */
 @ApplicationScoped
-public class AuthorNormalizationServiceImpl implements AuthorNormalizationService {
+public class AuthorNormalizationServiceImpl implements NormalizationService {
 
     @Override
-    public void normalize(Author author) {
-        double citationCount = 0.0;
-        for (CitationCount count : author.getCitations()) {
-            int coauthorsCount = count.getCoathorsCount();
-            double currentContribution = count.getContribution();
-            count.setContribution(currentContribution / coauthorsCount);
-        }
+    public void normalize(Work work) {
+        int totalAuthorCount = work.getAuthors().size();
+        double currentContribution = work.getCitationCount();
+        work.setCitationCount(currentContribution / totalAuthorCount);
     }
 }
-

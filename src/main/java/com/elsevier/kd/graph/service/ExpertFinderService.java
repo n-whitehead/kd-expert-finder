@@ -1,6 +1,6 @@
 package com.elsevier.kd.graph.service;
 
-import javax.json.JsonArray;
+import javax.json.JsonObject;
 import java.util.Set;
 
 public interface ExpertFinderService {
@@ -12,7 +12,7 @@ public interface ExpertFinderService {
      * @param iris  - iris of the concepts
      * @param k     - number of authors results to return
      * @param decay - decay rate for citation count
-     * @return Json array of citation counts
+     * @return Json of citation counts and other metadata
      */
-    JsonArray findExperts(Set<String> iris, int k, double decay);
+    JsonObject findExperts(Set<String> iris, int k, double decay);
 }

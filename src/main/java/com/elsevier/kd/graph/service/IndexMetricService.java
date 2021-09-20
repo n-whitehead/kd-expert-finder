@@ -1,6 +1,7 @@
 package com.elsevier.kd.graph.service;
 
-import com.elsevier.kd.graph.model.CitationCount;
+import com.elsevier.kd.graph.model.Author;
+import com.elsevier.kd.graph.model.Work;
 
 import java.util.List;
 
@@ -11,10 +12,11 @@ import java.util.List;
 public interface IndexMetricService {
 
     /**
-     * Calculate a custom metric based on citation counts.
+     * Calculate an index metric for an author.
+     * References must be added to the object, or hindex will return 0.
      *
-     * @param citationCounts - citation counts of a set of referencing works.
-     * @return - index score.
+     * @param author
+     * @return
      */
-    int calculate(List<CitationCount> citationCounts);
+    int calculate(Author author);
 }
