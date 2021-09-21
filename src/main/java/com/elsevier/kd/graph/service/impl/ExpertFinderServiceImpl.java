@@ -8,6 +8,7 @@ import com.elsevier.kd.graph.service.ExpertFinderService;
 import com.elsevier.kd.graph.service.IndexMetricService;
 import com.elsevier.kd.graph.service.NormalizationService;
 import com.elsevier.kd.graph.service.qualifiers.KnowledgeDiscovery;
+import com.elsevier.kd.graph.service.qualifiers.OrdinalNormalization;
 import org.neo4j.driver.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
     Driver driver;
 
     @Inject
+    @OrdinalNormalization
     NormalizationService normalizationService;
 
     @Inject
@@ -72,12 +74,13 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             List<String> prefLabels = new ArrayList<>();
             try (Session session = driver.session(sessionConfig)) {
                 Result result = session.run(
-                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(label) RETURN label.literalForm AS prefLabel",
+                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(lbl) RETURN collect(lbl.literalForm) AS prefLabel",
                         Values.parameters("iri", conceptIri)
                 );
-                prefLabels = result.next().get("prefLabel").asList(Value::asString);
+                result.stream().forEach(record -> {
+                    concept.setPrefLabels(record.get("prefLabel").asList(Value::asString));
+                });
             }
-            concept.setPrefLabels(prefLabels);
             LOGGER.info("Extracting Citation Details in: {}", concept.getPrefLabels());
             // We only need authors of works belonging to a concept with NON-ZERO references. Zero reference works have no h-index. and therefore shouldn't be recommended.
             try (Session session = driver.session(sessionConfig)) {
@@ -149,8 +152,8 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
         // Add top-K into a JSON array
         int count = 0;
         JsonArrayBuilder resultArrayBuilder = Json.createArrayBuilder();
-        while ((count < k) && (count < authorScores.size())) {
-            AuthorScore score = authorScores.get(count);
+        while ((count < k) && (count < sortedScores.size())) {
+            AuthorScore score = sortedScores.get(count);
             JsonArrayBuilder conceptBuilder = Json.createArrayBuilder();
             for (Concept concept : score.getConcepts()) {
                 JsonObjectBuilder conceptObj = Json.createObjectBuilder();
