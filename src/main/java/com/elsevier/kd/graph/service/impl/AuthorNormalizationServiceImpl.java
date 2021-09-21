@@ -1,6 +1,6 @@
 package com.elsevier.kd.graph.service.impl;
 
-import com.elsevier.kd.graph.model.Work;
+import com.elsevier.kd.graph.model.Score;
 import com.elsevier.kd.graph.service.NormalizationService;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -12,9 +12,9 @@ import javax.enterprise.context.ApplicationScoped;
 public class AuthorNormalizationServiceImpl implements NormalizationService {
 
     @Override
-    public void normalize(Work work) {
-        int totalAuthorCount = work.getAuthors().size();
-        double currentContribution = work.getCitationCount();
-        work.setCitationCount(currentContribution / totalAuthorCount);
+    public void normalize(Score score) {
+        int totalAuthorCount = score.getAuthorsCount();
+        double currentContribution = score.getCitationCount();
+        score.setCitationCount(currentContribution / totalAuthorCount);
     }
 }

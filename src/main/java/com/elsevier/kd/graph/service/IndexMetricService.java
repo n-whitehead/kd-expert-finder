@@ -1,7 +1,6 @@
 package com.elsevier.kd.graph.service;
 
-import com.elsevier.kd.graph.model.Author;
-import com.elsevier.kd.graph.model.Work;
+import com.elsevier.kd.graph.model.Score;
 
 import java.util.List;
 
@@ -15,8 +14,8 @@ public interface IndexMetricService {
      * Calculate an index metric for an author.
      * References must be added to the object, or hindex will return 0.
      *
-     * @param author
+     * @param scores
      * @return
      */
-    int calculate(Author author);
+    int calculate(List<Score> scores);
 }

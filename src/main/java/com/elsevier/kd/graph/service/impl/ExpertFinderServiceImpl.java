@@ -1,14 +1,14 @@
 package com.elsevier.kd.graph.service.impl;
 
-import com.elsevier.kd.graph.model.Author;
+import com.elsevier.kd.graph.model.AuthorScore;
 import com.elsevier.kd.graph.model.Concept;
+import com.elsevier.kd.graph.model.Score;
 import com.elsevier.kd.graph.model.Work;
 import com.elsevier.kd.graph.service.ExpertFinderService;
 import com.elsevier.kd.graph.service.IndexMetricService;
 import com.elsevier.kd.graph.service.NormalizationService;
 import com.elsevier.kd.graph.service.qualifiers.KnowledgeDiscovery;
 import org.neo4j.driver.*;
-import org.neo4j.driver.types.MapAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,19 +16,19 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import javax.json.JsonObjectBuilder;
+import java.util.*;
 
 @ApplicationScoped
 public class ExpertFinderServiceImpl implements ExpertFinderService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExpertFinderServiceImpl.class);
 
-    // Need to qualify injected driver because CDI thinks there is another available driver bean (default)
+    @Inject
+    SessionConfig sessionConfig;
+
     @Inject
     @KnowledgeDiscovery
     Driver driver;
@@ -52,7 +52,7 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
         } else {
             // Only look for strictly the narrowest concepts in the set of iris.
             for (String iri : iris) {
-                try (Session session = driver.session()) {
+                try (Session session = driver.session(sessionConfig)) {
                     Result result = session.run(
                             "UNWIND $iris AS other MATCH p=(c:Concept {uri: $iri})-[:narrower*1..]->(o:Concept {uri: other}) RETURN count(nodes(p)) AS count",
                             Values.parameters("iris", iris, "iri", iri));
@@ -66,11 +66,10 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
         // For set of concepts, find the normalized h-index of every author in that subject.
         List<Concept> concepts = new ArrayList<>();
         for (String conceptIri : filteredConcepts) {
-            Concept concept = new Concept();
-            concept.setIri(conceptIri);
+            Concept concept = new Concept(conceptIri);
             // Get prefLabels for the concepts
             List<String> prefLabels = new ArrayList<>();
-            try (Session session = driver.session()) {
+            try (Session session = driver.session(sessionConfig)) {
                 Result result = session.run(
                         "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(label) RETURN label.literalForm AS prefLabel",
                         Values.parameters("iri", conceptIri)
@@ -79,90 +78,100 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             }
             concept.setPrefLabels(prefLabels);
             LOGGER.info("Extracting Citation Details in: {}", concept.getPrefLabels());
-
-            try (Session session = driver.session()) {
-                Result result = session.run(
-                        "MATCH (c:Concept { uri: $iri })<-[:hasSubject*0..]->(w:Work) RETURN w AS work",
-                        Values.parameters("iri", conceptIri));
-                List<Work> works = new ArrayList<>();
-                int test = result.list().size();
-            }
-
-
             // We only need authors of works belonging to a concept with NON-ZERO references. Zero reference works have no h-index. and therefore shouldn't be recommended.
-            try (Session session = driver.session()) {
+            try (Session session = driver.session(sessionConfig)) {
                 // TODO: Use Identifier nodes instead of ID fields.
                 Result result = session.run(
-                        "MATCH (c:Concept { uri: $iri }) MATCH (p:Person)-[o:authorOf]->(w:Work)-[:hasSubject]->(c)<-[:hasSubject]-(ref:Work)-[:references]->(w) RETURN w AS work, collect(DISTINCT ref) AS references, collect(DISTINCT {authorId: p.ID, ordinal: o.ordinal}) AS authors",
+                        "MATCH (p:Person)-[o:authorOf]->(w:Work)-[:hasSubject]->(c:Concept { uri: $iri })<-[:hasSubject]-(ref:Work)-[:references]->(w) WHERE id(w)<>id(ref) RETURN p.ID as author, w AS work, o.ordinal AS ordinal, size((w)<-[:authorOf]-()) AS count, collect(DISTINCT ref) AS references",
                         Values.parameters("iri", conceptIri));
-                List<Work> works = new ArrayList<>();
                 // TODO: Should throw an exception, or continue if result set is empty.
                 result.stream().forEach(record -> {
-                    Value workValue = record.get("work");
-                    Work work = new Work(workValue.get("ID").asString(), workValue.get("PublishedDate").asString());
-                    work.setDecay(decay);
-                    Value referenceValues = record.get("references");
-                    List<Work> references = referenceValues.asList(value -> new Work(value.get("ID").asString(), value.get("PublishedDate").asString()));
+                    String authorId = record.get("author").asString();
+
+                    Work work = new Work(record.get("work").get("ID").asString(), record.get("work").get("PublishedDate").asString());
+                    List<Work> references = record.get("references").asList(value -> new Work(value.get("ID").asString(), value.get("PublishedDate").asString()));
                     work.setReferences(references);
-                    // calculate the time decay for the citationCount contribution
-                    work.calculateTimeDecay();
-                    Value authorsValue = record.get("authors");
-                    List<Author> authors = authorsValue.asList(MapAccessor::asMap).stream().map(m -> {
-                        Author author = new Author();
-                        author.setId(String.valueOf(m.get("authorId")));
-                        if (m.get("ordinal") != null) {
-                            author.setOrdinal((Integer) m.get("ordinal"));
-                        }
-                        author.addWork(work);
-                        return author;
-                    }).collect(Collectors.toList());
-                    work.setAuthors(authors);
-                    works.add(work);
-                    concept.setWorks(works);
+
+                    Score score = new Score();
+                    score.setWork(work);
+                    score.setAuthorsCount(record.get("count").asInt());
+                    Value ordinalValue = record.get("ordinal");
+                    if (!ordinalValue.isNull()) {
+                        score.setOrdinal(ordinalValue.asInt());
+                    }
+                    score.setDecay(decay);
+                    score.calculateCitationCount();
+                    normalizationService.normalize(score);
+
+                    concept.addScore(authorId, score);
                 });
             }
             concepts.add(concept);
         }
-        // For each concept, normalize each work using a normalization strategy, then calculate the hindex for each author in the concept.
+        List<AuthorScore> authorScores = new ArrayList<>();
         for (Concept concept : concepts) {
-            double totalConceptHindex = 0;
-            // Problems with using ordinal?
-            for (Work work : concept.getWorks()) {
-                // Normalize citation contribution w.r.t authors of the work.
-                normalizationService.normalize(work);
-                // Are there duplicate authors for sets of works?
-                for (Author author : work.getAuthors()) {
-                    double authorHindex = indexMetricService.calculate(author);
-                    totalConceptHindex += authorHindex;
-                    author.setHindex(authorHindex);
-                }
+            LOGGER.info("Calculating index scores for: {}", concept.getPrefLabels());
+            // For each value in the map, calculate h-index
+            List<AuthorScore> conceptAuthorScores = new ArrayList<>();
+            for (String authorId : concept.getAuthorScores().keySet()) {
+                List<Score> values = concept.getAuthorScores().get(authorId);
+                int hindex = indexMetricService.calculate(values);
+                AuthorScore authorScore = new AuthorScore(authorId, hindex);
+                Set<Concept> conceptSet = new HashSet<>();
+                conceptSet.add(concept);
+                authorScore.addConcepts(conceptSet);
+                conceptAuthorScores.add(authorScore);
             }
-
+            // Calculate average h-index of the concept
+            double averageHindex = conceptAuthorScores.stream().mapToDouble(AuthorScore::getHindex).average().orElse(1.0);
+            // Divide each concept score by the average hindex of the concept
+            conceptAuthorScores.forEach(author -> {
+                double currentIndex = author.getHindex();
+                author.setHindex(currentIndex / averageHindex);
+            });
+            // Merge author scores into final scores
+            authorScores.addAll(conceptAuthorScores);
         }
-
-
-//        for (Concept concept : concepts) {
-//            List<Author> authors = concept.getAuthors();
-//            for (Author author : authors) {
-//                // Normalize citation count contributions w.r.t authors in a concept
-//                normalizationService.normalize(author);
-//                // Calculate the hIndex for each author in the concept. Add it to the conceptHIndex
-//                double authorHindex = indexMetricService.calculate(author.getCitations());
-//                author.setHindex(authorHindex);
-//            }
-//            double totalHindex = authors.stream().mapToDouble(Author::getHindex).sum();
-//            double averageHindex = totalHindex / authors.size();
-//            // Normalize h-index score within a concept, this makes it comparable to other concepts.
-//            authors.forEach(author -> {
-//                double currentHindex = author.getHindex();
-//                author.setHindex(currentHindex / averageHindex);
-//            });
-//    }
-
-
-        // TODO: Flatten scores map, merge common key scores, and sort by largest values. Take top k.
-        // TODO: Write array result into a JSON Array. Might want to consider returning a JSON object with prefLabels, and other metadata besides just author rankings?
-        JsonObject obj = Json.createObjectBuilder().build();
-        return obj;
+        // Need to group duplicates
+        Map<String, AuthorScore> scoresMap = new HashMap<>();
+        authorScores.forEach(authorScore -> {
+            scoresMap.merge(
+                    authorScore.getId(),
+                    new AuthorScore(authorScore.getId(), authorScore.getHindex(), authorScore.getConcepts()),
+                    (o, n) -> {
+                        o.setHindex(o.getHindex() + n.getHindex());
+                        o.addConcepts(n.getConcepts());
+                        return o;
+                    });
+        });
+        // Reverse sort author scores by h-index
+        List<AuthorScore> sortedScores = new ArrayList<>(scoresMap.values());
+        sortedScores.sort(Comparator.comparing(AuthorScore::getHindex).reversed());
+        // Add top-K into a JSON array
+        int count = 0;
+        JsonArrayBuilder resultArrayBuilder = Json.createArrayBuilder();
+        while ((count < k) && (count < authorScores.size())) {
+            AuthorScore score = authorScores.get(count);
+            JsonArrayBuilder conceptBuilder = Json.createArrayBuilder();
+            for (Concept concept : score.getConcepts()) {
+                JsonObjectBuilder conceptObj = Json.createObjectBuilder();
+                conceptObj.add("concept", concept.getIri());
+                JsonArrayBuilder labelBuilder = Json.createArrayBuilder();
+                for (String prefLabel : concept.getPrefLabels()) {
+                    labelBuilder.add(prefLabel);
+                }
+                conceptObj.add("prefLabels", labelBuilder.build());
+                conceptBuilder.add(conceptObj);
+            }
+            JsonObject scoreObject = Json.createObjectBuilder()
+                    .add("id", score.getId())
+                    .add("hindex", score.getHindex())
+                    .add("concepts", conceptBuilder.build()).build();
+            resultArrayBuilder.add(scoreObject);
+            count++;
+        }
+        JsonObjectBuilder resultBuilder = Json.createObjectBuilder();
+        resultBuilder.add("returned", count).add("result", resultArrayBuilder.build());
+        return resultBuilder.build();
     }
 }
