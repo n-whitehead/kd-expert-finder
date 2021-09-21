@@ -29,6 +29,7 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
     @Inject
     SessionConfig sessionConfig;
 
+    // quarkus-neo4j artifact creates a Driver bean, so rather than using a different library we qualify ours.
     @Inject
     @KnowledgeDiscovery
     Driver driver;
@@ -84,7 +85,6 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
                 Result result = session.run(
                         "MATCH (p:Person)-[o:authorOf]->(w:Work)-[:hasSubject]->(c:Concept { uri: $iri })<-[:hasSubject]-(ref:Work)-[:references]->(w) WHERE id(w)<>id(ref) RETURN p.ID as author, w AS work, o.ordinal AS ordinal, size((w)<-[:authorOf]-()) AS count, collect(DISTINCT ref) AS references",
                         Values.parameters("iri", conceptIri));
-                // TODO: Should throw an exception, or continue if result set is empty.
                 result.stream().forEach(record -> {
                     String authorId = record.get("author").asString();
 
@@ -129,10 +129,9 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
                 double currentIndex = author.getHindex();
                 author.setHindex(currentIndex / averageHindex);
             });
-            // Merge author scores into final scores
             authorScores.addAll(conceptAuthorScores);
         }
-        // Need to group duplicates
+        // Merge author scores by first grouping on ID, then merging old and new objects into a new object.
         Map<String, AuthorScore> scoresMap = new HashMap<>();
         authorScores.forEach(authorScore -> {
             scoresMap.merge(

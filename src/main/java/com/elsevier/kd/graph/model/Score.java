@@ -7,7 +7,7 @@ public class Score {
 
     private double citationCount;
     private double decay;
-    private int ordinal;
+    private Integer ordinal;
     private int authorsCount;
     private Work work;
 
@@ -30,11 +30,11 @@ public class Score {
         this.decay = decay;
     }
 
-    public int getOrdinal() {
+    public Integer getOrdinal() {
         return ordinal;
     }
 
-    public void setOrdinal(int ordinal) {
+    public void setOrdinal(Integer ordinal) {
         this.ordinal = ordinal;
     }
 
