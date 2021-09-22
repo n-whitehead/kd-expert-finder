@@ -174,7 +174,14 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
         // Get unique set of concepts
         JsonArrayBuilder uniqueConceptsBuilder = Json.createArrayBuilder();
         for (Concept concept : concepts) {
-            uniqueConceptsBuilder.add(concept.getIri());
+            JsonObjectBuilder usedConceptObjBuilder = Json.createObjectBuilder();
+            usedConceptObjBuilder.add("iri", concept.getIri());
+            JsonArrayBuilder prefLabelsArrayBuilder = Json.createArrayBuilder();
+            for (String prefLabel : concept.getPrefLabels())  {
+                prefLabelsArrayBuilder.add(prefLabel);
+            }
+            usedConceptObjBuilder.add("prefLabels", prefLabelsArrayBuilder.build());
+            uniqueConceptsBuilder.add(usedConceptObjBuilder.build());
         }
         resultBuilder.add("returned", count).add("usedConcepts", uniqueConceptsBuilder.build()).add("results", resultArrayBuilder.build());
         return resultBuilder.build();
