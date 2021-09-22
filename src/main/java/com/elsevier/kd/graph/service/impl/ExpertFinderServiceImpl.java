@@ -64,18 +64,18 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             LOGGER.info("Filtered Concepts: {}", filteredConcepts);
         }
         // For set of concepts, find the normalized h-index of every author in that subject.
-        List<Concept> concepts = new ArrayList<>();
+        Set<Concept> concepts = new HashSet<>();
         for (String conceptIri : filteredConcepts) {
             Concept concept = new Concept(conceptIri);
             // Get prefLabels for the concepts
             List<String> prefLabels = new ArrayList<>();
             try (Session session = driver.session(sessionConfig)) {
                 Result result = session.run(
-                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(lbl) RETURN lbl.literalForm AS prefLabel",
+                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(lbl) RETURN lbl.literalForm AS literalForm",
                         Values.parameters("iri", conceptIri)
                 );
                 result.stream().forEach(record -> {
-                    concept.addLabels(record.get("prefLabel").asList(Value::asString));
+                    concept.addLabels(record.get("literalForm").asList(Value::asString));
                 });
             }
             LOGGER.info("Extracting Citation Details in: {}", concept.getPrefLabels());
@@ -171,7 +171,12 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             count++;
         }
         JsonObjectBuilder resultBuilder = Json.createObjectBuilder();
-        resultBuilder.add("returned", count).add("results", resultArrayBuilder.build());
+        // Get unique set of concepts
+        JsonArrayBuilder uniqueConceptsBuilder = Json.createArrayBuilder();
+        for (Concept concept : concepts) {
+            uniqueConceptsBuilder.add(concept.getIri());
+        }
+        resultBuilder.add("returned", count).add("usedConcepts", uniqueConceptsBuilder.build()).add("results", resultArrayBuilder.build());
         return resultBuilder.build();
     }
 }
