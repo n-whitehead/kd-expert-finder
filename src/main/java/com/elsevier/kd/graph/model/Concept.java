@@ -19,6 +19,14 @@ public class Concept {
         authorScores.get(authorId).add(score);
     }
 
+    public void addLabel(String prefLabel) {
+        prefLabels.add(prefLabel);
+    }
+
+    public void addLabels(List<String> prefLabels) {
+        this.prefLabels.addAll(prefLabels);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)

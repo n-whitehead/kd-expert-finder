@@ -8,20 +8,20 @@ public class AuthorScore {
 
     private String id;
     private double hindex;
-    private Set<Concept> concepts = new HashSet<>();
+    private Set<ConceptDetail> concepts = new HashSet<>();
 
     public AuthorScore(String id, double hindex) {
         this.id = id;
         this.hindex = hindex;
     }
 
-    public AuthorScore(String id, double hindex, Set<Concept> concepts) {
+    public AuthorScore(String id, double hindex, Set<ConceptDetail> concepts) {
         this.id = id;
         this.hindex = hindex;
         this.concepts = concepts;
     }
 
-    public void addConcepts(Set<Concept> concepts) {
+    public void addConcepts(Set<ConceptDetail> concepts) {
         this.concepts.addAll(concepts);
     }
 
@@ -56,11 +56,11 @@ public class AuthorScore {
         this.hindex = hindex;
     }
 
-    public Set<Concept> getConcepts() {
+    public Set<ConceptDetail> getConcepts() {
         return concepts;
     }
 
-    public void setConcepts(Set<Concept> concepts) {
+    public void setConcepts(Set<ConceptDetail> concepts) {
         this.concepts = concepts;
     }
 }

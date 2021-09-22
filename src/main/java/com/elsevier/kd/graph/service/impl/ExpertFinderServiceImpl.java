@@ -1,9 +1,6 @@
 package com.elsevier.kd.graph.service.impl;
 
-import com.elsevier.kd.graph.model.AuthorScore;
-import com.elsevier.kd.graph.model.Concept;
-import com.elsevier.kd.graph.model.Score;
-import com.elsevier.kd.graph.model.Work;
+import com.elsevier.kd.graph.model.*;
 import com.elsevier.kd.graph.service.ExpertFinderService;
 import com.elsevier.kd.graph.service.IndexMetricService;
 import com.elsevier.kd.graph.service.NormalizationService;
@@ -74,11 +71,11 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             List<String> prefLabels = new ArrayList<>();
             try (Session session = driver.session(sessionConfig)) {
                 Result result = session.run(
-                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(lbl) RETURN collect(lbl.literalForm) AS prefLabel",
+                        "MATCH (c:Concept { uri: $iri })-[:prefLabel]->(lbl) RETURN lbl.literalForm AS prefLabel",
                         Values.parameters("iri", conceptIri)
                 );
                 result.stream().forEach(record -> {
-                    concept.setPrefLabels(record.get("prefLabel").asList(Value::asString));
+                    concept.addLabels(record.get("prefLabel").asList(Value::asString));
                 });
             }
             LOGGER.info("Extracting Citation Details in: {}", concept.getPrefLabels());
@@ -120,8 +117,8 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
                 List<Score> values = concept.getAuthorScores().get(authorId);
                 int hindex = indexMetricService.calculate(values);
                 AuthorScore authorScore = new AuthorScore(authorId, hindex);
-                Set<Concept> conceptSet = new HashSet<>();
-                conceptSet.add(concept);
+                Set<ConceptDetail> conceptSet = new HashSet<>();
+                conceptSet.add(new ConceptDetail(concept, hindex));
                 authorScore.addConcepts(conceptSet);
                 conceptAuthorScores.add(authorScore);
             }
@@ -155,11 +152,12 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
         while ((count < k) && (count < sortedScores.size())) {
             AuthorScore score = sortedScores.get(count);
             JsonArrayBuilder conceptBuilder = Json.createArrayBuilder();
-            for (Concept concept : score.getConcepts()) {
+            for (ConceptDetail concept : score.getConcepts()) {
                 JsonObjectBuilder conceptObj = Json.createObjectBuilder();
-                conceptObj.add("concept", concept.getIri());
+                conceptObj.add("contribution", concept.getHindexContribution());
+                conceptObj.add("concept", concept.getConcept().getIri());
                 JsonArrayBuilder labelBuilder = Json.createArrayBuilder();
-                for (String prefLabel : concept.getPrefLabels()) {
+                for (String prefLabel : concept.getConcept().getPrefLabels()) {
                     labelBuilder.add(prefLabel);
                 }
                 conceptObj.add("prefLabels", labelBuilder.build());
@@ -167,13 +165,13 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             }
             JsonObject scoreObject = Json.createObjectBuilder()
                     .add("id", score.getId())
-                    .add("hindex", score.getHindex())
+                    .add("score", score.getHindex())
                     .add("concepts", conceptBuilder.build()).build();
             resultArrayBuilder.add(scoreObject);
             count++;
         }
         JsonObjectBuilder resultBuilder = Json.createObjectBuilder();
-        resultBuilder.add("returned", count).add("result", resultArrayBuilder.build());
+        resultBuilder.add("returned", count).add("results", resultArrayBuilder.build());
         return resultBuilder.build();
     }
 }
