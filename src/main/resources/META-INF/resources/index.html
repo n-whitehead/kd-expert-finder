@@ -1,170 +1,166 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>kd-expert-finder - 1.0.0-SNAPSHOT</title>
+    <title>Expert Finder</title>
+    <script src="Chart.min.js"></script>
+    <script src="jquery.js"></script>
     <style>
-        h1, h2, h3, h4, h5, h6 {
-            margin-bottom: 0.5rem;
-            font-weight: 400;
-            line-height: 1.5;
-        }
+            canvas {
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+            }
 
-        h1 {
-            font-size: 2.5rem;
-        }
 
-        h2 {
-            font-size: 2rem
-        }
-
-        h3 {
-            font-size: 1.75rem
-
-        }
-
-        h4 {
-            font-size: 1.5rem
-        }
-
-        h5 {
-            font-size: 1.25rem
-        }
-
-        h6 {
-            font-size: 1rem
-        }
-
-        .lead {
-            font-weight: 300;
-            font-size: 2rem;
-        }
-
-        .banner {
-            font-size: 2.7rem;
-            margin: 0;
-            padding: 2rem 1rem;
-            background-color: #0d1c2c;
-            color: white;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-        }
-
-        code {
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 87.5%;
-            color: #e83e8c;
-            word-break: break-word;
-        }
-
-        .left-column {
-            padding: .75rem;
-            max-width: 75%;
-            min-width: 55%;
-        }
-
-        .right-column {
-            padding: .75rem;
-            max-width: 25%;
-        }
-
-        .container {
-            display: flex;
-            width: 100%;
-        }
-
-        li {
-            margin: 0.75rem;
-        }
-
-        .right-section {
-            margin-left: 1rem;
-            padding-left: 0.5rem;
-        }
-
-        .right-section h3 {
-            padding-top: 0;
-            font-weight: 200;
-        }
-
-        .right-section ul {
-            border-left: 0.3rem solid #71aeef;
-            list-style-type: none;
-            padding-left: 0;
-        }
-
-        .provided-code {
-            border-left: 0.3rem solid #71aeef;
-            padding-left: 10px;
-        }
-
-        .provided-code h3 {
-            font-weight: 200;
-        }
     </style>
 </head>
+
 <body>
-
-<div class="banner lead">
-    Your new Cloud-Native application is ready!
+<textarea id="iris" cols="100" rows="3"></textarea>
+<textarea id="decay" cols="100" rows="3"></textarea>
+<textarea id="count" cols="100" rows="3"></textarea>
+<button id="Retrieve">Retrieve</button>
+<div id="authors" style="width: 100%;">
 </div>
-
-<div class="container">
-    <div class="left-column">
-        <p class="lead"> Congratulations, you have created a new Quarkus cloud application.</p>
-
-        <h2>What is this page?</h2>
-
-        <p>This page is served by Quarkus. The source is in
-            <code>src/main/resources/META-INF/resources/index.html</code>.</p>
-
-        <h2>What are your next steps?</h2>
-
-        <p>If not already done, run the application in <em>dev mode</em> using: <code>./mvnw compile quarkus:dev</code>.
-        </p>
-        <ul>
-            <li>Your static assets are located in <code>src/main/resources/META-INF/resources</code>.</li>
-            <li>Configure your application in <code>src/main/resources/application.properties</code>.</li>
-            <li>Quarkus now ships with a <a href="/q/dev/">Dev UI</a> (available in dev mode only)</li>
-            <li>Play with the provided code located in <code>src/main/java</code>:</li>
-        </ul>
-                <div class="provided-code">
-            <h3>RESTEasy JAX-RS</h3>
-            <p>Easily start your RESTful Web Services</p>
-            <p><code>@Path: <a href="/hello" class="path-link" target="_blank">/hello</a></code></p>
-            <p><a href="https://quarkus.io/guides/getting-started#the-jax-rs-resources" class="guide-link" target="_blank">Related guide section...</a></p>
-        </div>
-
-    </div>
-    <div class="right-column">
-        <div class="right-section">
-            <h3>Application</h3>
-            <ul>
-                <li>GroupId: <code>com.elsevier.kd.graph</code></li>
-                <li>ArtifactId: <code>kd-expert-finder</code></li>
-                <li>Version: <code>1.0.0-SNAPSHOT</code></li>
-                <li>Quarkus Version: <code>2.2.3.Final</code></li>
-            </ul>
-        </div>
-        <div class="right-section">
-            <h3>Do you like Quarkus?</h3>
-            <ul>
-                <li>Go give it a star on <a href="https://github.com/quarkusio/quarkus">GitHub</a>.</li>
-            </ul>
-        </div>
-        <div class="right-section">
-            <h3>More reading</h3>
-            <ul>
-                <li><a href="https://quarkus.io/guides/maven-tooling.html" target="_blank">Setup your IDE</a></li>
-                <li><a href="https://quarkus.io/guides/getting-started.html" target="_blank">Getting started</a></li>
-                <li><a href="https://quarkus.io/guides/" target="_blank">All guides</a></li>
-                <li><a href="https://quarkus.io" target="_blank">Quarkus Web Site</a></li>
-            </ul>
-        </div>
-    </div>
+<div id="container" style="width: 100%;">
 </div>
+<script>
+            $(document).ready(function () {
+            });
+            function createDataset(testData) {
+                var selectedAuthors = testData.result;
+                var authorsElem = document.getElementById("authors");
+                var title = document.createElement("h3");
+                title.innerHTML = "Recommended Experts";
+                var list = document.createElement("ol");
+                authorsElem.appendChild(title);
+                authorsElem.appendChild(list);
+
+                authors = []
+                for (k = 0, len = selectedAuthors.length; k < len; k++) {
+                    var item = document.createElement("li");
+                    var author = selectedAuthors[k].id
+                    authors.push(author);
+                    hindexes = []
+                    for (i = 0, len = selectedAuthors[k].concepts.length; i < len; i++) {
+                        hindexObj = {
+                                      label: selectedAuthors[k].concepts[i].prefLabels[0],
+                                      data: selectedAuthors[k].concepts[i].hindex,
+                                      backgroundColor: Utils.CHART_COLORS.red
+                                    };
+                        var conceptName = selectedAuthors[k].concepts[i].prefLabel[0];
+                        var subjects = [];
+                        var hindexes = [];
+                        subjects.push(concept.concept);
+                            hindexes.push(concept.hindex);
+
+
+                        hindexObj.data = hindexes,
+                        hindexes.push(hindexObj);
+                        var chartcont = document.createElement("div");
+                        chartcont.id = "chartcont" + i;
+                        chartcont.style = 'width: 33%;float:left;';
+                        var canvas = document.createElement("canvas");
+                        canvas.id = "myChart" + i;
+                        var ctx = canvas.getContext('2d');
+                        chartcont.appendChild(canvas);
+                        document.getElementById("container").appendChild(chartcont);
+                        var myChart = createChart(ctx, author, conceptName, hindexes, selectedAuthors);
+                    }
+                }
+            }
+
+            function createChart(ctx, labels, authors, hindexes, selectedAuthors) {
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: authors,
+                        datasets: [{
+                                label: labels,
+                                data: hindexes,
+                                backgroundColor: function (context) {
+                                    var index = context.dataIndex;
+                                    var value = context.chart.data.labels[index];
+                                    var color = 'blue';
+                                    for (k = 0, len = selectedAuthors.length; k < len; k++) {
+                                        if (value === selectedAuthors[k].id) {
+                                            color = 'green';
+                                        }
+                                    }
+                                    return color;
+                                },
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                          legend: {
+                            position: 'top',
+                          },
+                          title: {
+                            display: true,
+                            text: 'Chart.js Bar Chart'
+                          }
+                        }
+                });
+            }
+
+            window.onload = function () {
+                //			var ctx = document.getElementById('canvas').getContext('2d');
+                //			window.myBar = new Chart(ctx, {
+                //				type: 'bar',
+                //				data: barChartData,
+                //				options: {
+                //
+                //				}
+                //			});
+                //
+            };
+
+            document.getElementById('Retrieve').addEventListener('click', function () {
+                var iriText = document.getElementById("iris").value;
+                var iriText = iriText.split(",");
+                var iris = "iri=" + iriText.join("&iri=");
+                var data = iris;
+                var decayVar = document.getElementById("decay");
+                if (decayVar != undefined)  {
+                    var decayText = decayVar.value;
+                    var decay = "&decay="
+                    var data = data + decay + decayText;
+                }
+                var countVar = document.getElementById("k");
+                if (countVar != undefined)  {
+                    var countText = countVar.value;
+                    var count = "&count="
+                    var data = data + count + countText;
+                }
+                $.ajax({
+                    type: 'GET',
+                    url: '/expert',
+                    data: data,
+                    success: function (d) {
+                        document.getElementById("authors").innerHTML = "";
+                        document.getElementById("container").innerHTML = "";
+                        createDataset(d);
+                    },
+                    failure: function (d) {
+                        console.error("some error occurred " + d);
+                    }
+                });
+            });
+
+
+</script>
 </body>
+
 </html>
