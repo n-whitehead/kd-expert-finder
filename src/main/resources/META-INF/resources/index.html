@@ -1,11 +1,11 @@
 <!doctype html>
 <html>
 
-<head>
-    <title>Expert Finder</title>
-    <script src="Chart.min.js"></script>
-    <script src="jquery.js"></script>
-    <style>
+    <head>
+        <title>Expert Finder</title>
+        <script src="Chart.min.js"></script>
+        <script src="jquery.js"></script>
+        <style>
             canvas {
                 -moz-user-select: none;
                 -webkit-user-select: none;
@@ -13,133 +13,147 @@
             }
 
 
-    </style>
-</head>
+        </style>
+    </head>
 
-<body>
-<textarea id="iris" cols="100" rows="3"></textarea>
-<textarea id="decay" cols="100" rows="3"></textarea>
-<textarea id="count" cols="100" rows="3"></textarea>
-<button id="Retrieve">Retrieve</button>
-<div id="authors" style="width: 100%;">
-</div>
-<div id="container" style="width: 100%;">
-</div>
-<script>
+    <body>
+        <textarea id="iris" placeholder="iris" cols="100" rows="3"></textarea>
+        <textarea id="decay" placeholder="decay" cols="100" rows="3"></textarea>
+        <textarea id="k" placeholder="k" cols="100" rows="3"></textarea>
+        <button id="Retrieve">Retrieve</button>
+        <div id="authors" style="width: 100%;">
+        </div>
+        <div id="container" style="width: 100%;">
+        </div>
+        <script>
             $(document).ready(function () {
             });
+            const CHART_COLORS = {
+                red: 'rgb(255, 99, 132)',
+                orange: 'rgb(255, 159, 64)',
+                yellow: 'rgb(255, 205, 86)',
+                green: 'rgb(75, 192, 192)',
+                blue: 'rgb(54, 162, 235)',
+                purple: 'rgb(153, 102, 255)',
+                grey: 'rgb(201, 203, 207)'
+            };
+
+            const NAMED_COLORS = [
+                CHART_COLORS.blue,
+                CHART_COLORS.purple,
+                CHART_COLORS.grey,
+                CHART_COLORS.red,
+                CHART_COLORS.orange,
+                CHART_COLORS.yellow,
+                CHART_COLORS.green,
+            ];
+
+            function namedColor(index) {
+                return NAMED_COLORS[index % NAMED_COLORS.length];
+            }
+
             function createDataset(testData) {
-                var selectedAuthors = testData.result;
+                var selectedAuthors = testData.results;
+                var allConcepts = testData.usedConcepts;
                 var authorsElem = document.getElementById("authors");
                 var title = document.createElement("h3");
                 title.innerHTML = "Recommended Experts";
                 var list = document.createElement("ol");
+                var authors = [];
+                for (var k = 0, len = selectedAuthors.length; k < len; k++) {
+                    var item = document.createElement("li");
+                    authors.push(selectedAuthors[k].id);
+                    item.innerHTML = selectedAuthors[k].id + ": " + selectedAuthors[k]['score'];
+                    list.appendChild(item);
+                }
                 authorsElem.appendChild(title);
                 authorsElem.appendChild(list);
-
-                authors = []
-                for (k = 0, len = selectedAuthors.length; k < len; k++) {
-                    var item = document.createElement("li");
-                    var author = selectedAuthors[k].id
-                    authors.push(author);
-                    hindexes = []
-                    for (i = 0, len = selectedAuthors[k].concepts.length; i < len; i++) {
-                        hindexObj = {
-                                      label: selectedAuthors[k].concepts[i].prefLabels[0],
-                                      data: selectedAuthors[k].concepts[i].hindex,
-                                      backgroundColor: Utils.CHART_COLORS.red
-                                    };
-                        var conceptName = selectedAuthors[k].concepts[i].prefLabel[0];
-                        var subjects = [];
-                        var hindexes = [];
-                        subjects.push(concept.concept);
-                            hindexes.push(concept.hindex);
-
-
-                        hindexObj.data = hindexes,
-                        hindexes.push(hindexObj);
-                        var chartcont = document.createElement("div");
-                        chartcont.id = "chartcont" + i;
-                        chartcont.style = 'width: 33%;float:left;';
-                        var canvas = document.createElement("canvas");
-                        canvas.id = "myChart" + i;
-                        var ctx = canvas.getContext('2d');
-                        chartcont.appendChild(canvas);
-                        document.getElementById("container").appendChild(chartcont);
-                        var myChart = createChart(ctx, author, conceptName, hindexes, selectedAuthors);
+                var datasets = []
+                for (var l = 0, len = allConcepts.length; l < len; l++) {
+                    var usedConcept = allConcepts[l];
+                    var hindexes = [];
+                    for (var k = 0; k < selectedAuthors.length; k++) {
+                        var author = selectedAuthors[k];
+                        var foundConcept = null;
+                        for (var j = 0; j < author.concepts.length; j++) {
+                            var concept = author.concepts[j];
+                            if (usedConcept.iri === concept.concept) {
+                                foundConcept = concept;
+                                break;
+                            }
+                        }
+                        if (foundConcept !== null) {
+                            hindexes.push(foundConcept.contribution);
+                        } else {
+                            hindexes.push(0);
+                        }
                     }
+                    datasets.push({
+                        label: usedConcept.prefLabels.join(", "),
+                        data: hindexes,
+                        backgroundColor: function (context) {
+                            return namedColor(context.datasetIndex);
+                        },
+                        borderWidth: 1
+                    })
                 }
+                var chartcont = document.createElement("div");
+                chartcont.id = "chartcont";
+                chartcont.style = 'width: 75%;float:left;';
+                var canvas = document.createElement("canvas");
+                canvas.id = "myChart";
+                var ctx = canvas.getContext('2d');
+                chartcont.appendChild(canvas);
+                document.getElementById("container").appendChild(chartcont);
+                var myChart = createChart(ctx, authors, datasets);
             }
 
-            function createChart(ctx, labels, authors, hindexes, selectedAuthors) {
+            function createChart(ctx, authors, datasets) {
                 return new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: authors,
-                        datasets: [{
-                                label: labels,
-                                data: hindexes,
-                                backgroundColor: function (context) {
-                                    var index = context.dataIndex;
-                                    var value = context.chart.data.labels[index];
-                                    var color = 'blue';
-                                    for (k = 0, len = selectedAuthors.length; k < len; k++) {
-                                        if (value === selectedAuthors[k].id) {
-                                            color = 'green';
-                                        }
-                                    }
-                                    return color;
-                                },
-                                borderColor: [
-                                    'rgba(255, 99, 132, 1)',
-                                    'rgba(54, 162, 235, 1)',
-                                    'rgba(255, 206, 86, 1)',
-                                    'rgba(75, 192, 192, 1)',
-                                    'rgba(153, 102, 255, 1)',
-                                    'rgba(255, 159, 64, 1)'
-                                ],
-                                borderWidth: 1
-                            }]
+                        datasets: datasets
                     },
                     options: {
-                        responsive: true,
                         plugins: {
-                          legend: {
-                            position: 'top',
-                          },
-                          title: {
-                            display: true,
-                            text: 'Chart.js Bar Chart'
-                          }
+                            title: {
+                                display: true,
+                                text: 'Chart.js Bar Chart - Stacked'
+                            },
+                            legend: {
+                                align: 'start'
+                            }
+                        },
+                        responsive: true,
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true
+                            }
                         }
+                    }
                 });
             }
-
-            window.onload = function () {
-                //			var ctx = document.getElementById('canvas').getContext('2d');
-                //			window.myBar = new Chart(ctx, {
-                //				type: 'bar',
-                //				data: barChartData,
-                //				options: {
-                //
-                //				}
-                //			});
-                //
-            };
 
             document.getElementById('Retrieve').addEventListener('click', function () {
                 var iriText = document.getElementById("iris").value;
                 var iriText = iriText.split(",");
+                for (var i = 0; i < iriText.length; i++) {
+                    iriText[i] = iriText[i].trim();
+                }
                 var iris = "iri=" + iriText.join("&iri=");
                 var data = iris;
                 var decayVar = document.getElementById("decay");
-                if (decayVar != undefined)  {
+                if (decayVar.value !== "") {
                     var decayText = decayVar.value;
                     var decay = "&decay="
                     var data = data + decay + decayText;
                 }
                 var countVar = document.getElementById("k");
-                if (countVar != undefined)  {
+                if (countVar.value !== "") {
                     var countText = countVar.value;
                     var count = "&count="
                     var data = data + count + countText;
@@ -160,7 +174,7 @@
             });
 
 
-</script>
-</body>
+        </script>
+    </body>
 
 </html>
