@@ -125,9 +125,11 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             // Calculate average h-index of the concept
             double averageHindex = conceptAuthorScores.stream().mapToDouble(AuthorScore::getHindex).average().orElse(1.0);
             // Divide each concept score by the average hindex of the concept
-            conceptAuthorScores.forEach(author -> {
-                double currentIndex = author.getHindex();
-                author.setHindex(currentIndex / averageHindex);
+            conceptAuthorScores.forEach(authorScore -> {
+                double currentIndex = authorScore.getHindex();
+                double normal = currentIndex / averageHindex;
+                authorScore.setHindex(normal);
+                authorScore.getConcepts().forEach(conceptDetail -> conceptDetail.setHindexContribution(normal));
             });
             authorScores.addAll(conceptAuthorScores);
         }
@@ -177,7 +179,7 @@ public class ExpertFinderServiceImpl implements ExpertFinderService {
             JsonObjectBuilder usedConceptObjBuilder = Json.createObjectBuilder();
             usedConceptObjBuilder.add("iri", concept.getIri());
             JsonArrayBuilder prefLabelsArrayBuilder = Json.createArrayBuilder();
-            for (String prefLabel : concept.getPrefLabels())  {
+            for (String prefLabel : concept.getPrefLabels()) {
                 prefLabelsArrayBuilder.add(prefLabel);
             }
             usedConceptObjBuilder.add("prefLabels", prefLabelsArrayBuilder.build());

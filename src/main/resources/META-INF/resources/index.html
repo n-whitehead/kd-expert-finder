@@ -1,6 +1,5 @@
 <!doctype html>
 <html>
-
     <head>
         <title>Expert Finder</title>
         <script src="Chart.min.js"></script>
@@ -11,15 +10,13 @@
                 -webkit-user-select: none;
                 -ms-user-select: none;
             }
-
-
         </style>
     </head>
 
     <body>
-        <textarea id="iris" placeholder="iris" cols="100" rows="3"></textarea>
-        <textarea id="decay" placeholder="decay" cols="100" rows="3"></textarea>
-        <textarea id="k" placeholder="k" cols="100" rows="3"></textarea>
+        <textarea id="iris" placeholder="iris" cols="100" rows="3"></textarea></br>
+        <textarea id="decay" placeholder="decay" cols="50" rows="2"></textarea>
+        <textarea id="k" placeholder="k" cols="50" rows="2"></textarea>
         <button id="Retrieve">Retrieve</button>
         <div id="authors" style="width: 100%;">
         </div>
@@ -99,7 +96,7 @@
                 }
                 var chartcont = document.createElement("div");
                 chartcont.id = "chartcont";
-                chartcont.style = 'width: 75%;float:left;';
+                chartcont.style = 'width: 40%;float:left;';
                 var canvas = document.createElement("canvas");
                 canvas.id = "myChart";
                 var ctx = canvas.getContext('2d');
@@ -119,7 +116,7 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Chart.js Bar Chart - Stacked'
+                                text: 'Experts by Subject'
                             },
                             legend: {
                                 align: 'start'
@@ -155,7 +152,7 @@
                 var countVar = document.getElementById("k");
                 if (countVar.value !== "") {
                     var countText = countVar.value;
-                    var count = "&count="
+                    var count = "&k="
                     var data = data + count + countText;
                 }
                 $.ajax({
