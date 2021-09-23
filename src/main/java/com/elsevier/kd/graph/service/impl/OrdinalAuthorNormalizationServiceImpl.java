@@ -18,7 +18,7 @@ public class OrdinalAuthorNormalizationServiceImpl implements NormalizationServi
         if (ordinal == null) {
             score.setCitationCount(currentContribution / totalAuthorCount);
         } else {
-            score.setCitationCount((2 * ((double) totalAuthorCount - ordinal.doubleValue() + 1)) / ((double) totalAuthorCount * ((double) totalAuthorCount - 1)));
+            score.setCitationCount((2 * ((double) totalAuthorCount - ordinal.doubleValue() + 1)) / ((double) totalAuthorCount * ((double) totalAuthorCount + 1)));
         }
     }
 }
